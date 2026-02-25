@@ -2,12 +2,32 @@ from rest_framework import serializers
 from .models import User, Team, Activity, Leaderboard, Workout
 
 
-class UserSerializer(serializers.ModelSerializer):
+class SimpleTeamSerializer(serializers.ModelSerializer):
+    """Simplified team serializer to avoid circular references"""
     id = serializers.SerializerMethodField()
 
     class Meta:
+        model = Team
+        fields = ['id', 'name']
+
+    def get_id(self, obj):
+        return str(obj.pk)
+
+
+class UserSerializer(serializers.ModelSerializer):
+    id = serializers.SerializerMethodField()
+    teams = SimpleTeamSerializer(many=True, read_only=True)
+    team_ids = serializers.PrimaryKeyRelatedField(
+        many=True, 
+        queryset=Team.objects.all(), 
+        source='teams', 
+        write_only=True,
+        required=False
+    )
+
+    class Meta:
         model = User
-        fields = ['id', 'email', 'name', 'age']
+        fields = ['id', 'email', 'name', 'age', 'teams', 'team_ids']
 
     def get_id(self, obj):
         return str(obj.pk)
