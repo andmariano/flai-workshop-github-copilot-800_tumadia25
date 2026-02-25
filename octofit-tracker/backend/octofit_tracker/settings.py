@@ -16,6 +16,13 @@ import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Codespace / proxy URL configuration
+CODESPACE_NAME = os.environ.get('CODESPACE_NAME', '')
+if CODESPACE_NAME:
+    CODESPACE_BASE_URL = f'https://{CODESPACE_NAME}-8000.app.github.dev'
+else:
+    CODESPACE_BASE_URL = 'http://localhost:8000'
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -26,7 +33,24 @@ SECRET_KEY = 'django-insecure-#l_qw5sx)3(+=la)1&d073@&2huu6%n)8x9auj!+hoobg7j!(*
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+# Allow the Codespace host and localhost; '*' kept as fallback for local dev
+if CODESPACE_NAME:
+    ALLOWED_HOSTS = [
+        f'{CODESPACE_NAME}-8000.app.github.dev',
+        'localhost',
+        '127.0.0.1',
+    ]
+else:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
+# Trust forwarded headers from the Codespaces HTTPS proxy so Django sees the
+# correct scheme (https) and host when building absolute URLs.
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Allow the Codespace origin in CSRF checks (browsable API, form POSTs)
+if CODESPACE_NAME:
+    CSRF_TRUSTED_ORIGINS = [CODESPACE_BASE_URL]
 
 
 # Application definition
